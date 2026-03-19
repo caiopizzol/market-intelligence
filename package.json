@@ -1,0 +1,18 @@
+{
+  "name": "driva-market-intelligence",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '@driva/api' dev & bun run --filter '@driva/web' dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.8",
+    "lefthook": "^2.1.4"
+  }
+}
