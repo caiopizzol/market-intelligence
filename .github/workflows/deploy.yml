@@ -15,9 +15,6 @@ on:
       - "Dockerfile"
       - ".github/**"
       - ".claude/**"
-      - "teste_tecnico.docx"
-      - "research.md"
-      - "user-story.md"
 
 env:
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
