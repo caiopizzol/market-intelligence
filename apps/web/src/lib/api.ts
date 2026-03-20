@@ -2,8 +2,8 @@ import type { CounterData, ExpansionScore, FilterState } from "@driva/shared";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+async function fetchJSON<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
@@ -30,28 +30,34 @@ function buildFilterParams(filters: FilterState): string {
   return params.toString();
 }
 
-export function fetchCompanyCount(filters: FilterState): Promise<CounterData> {
+export function fetchCompanyCount(
+  filters: FilterState,
+  signal?: AbortSignal,
+): Promise<CounterData> {
   const qs = buildFilterParams(filters);
-  return fetchJSON(`${API_URL}/companies/count?${qs}`);
+  return fetchJSON(`${API_URL}/companies/count?${qs}`, signal);
 }
 
 export function fetchCompaniesByState(
   filters: FilterState,
+  signal?: AbortSignal,
 ): Promise<Record<string, number>> {
   const qs = buildFilterParams(filters);
-  return fetchJSON(`${API_URL}/companies/by-state?${qs}`);
+  return fetchJSON(`${API_URL}/companies/by-state?${qs}`, signal);
 }
 
 export function fetchExpansion(
   filters: FilterState,
+  signal?: AbortSignal,
 ): Promise<ExpansionScore[]> {
   const qs = buildFilterParams(filters);
-  return fetchJSON(`${API_URL}/expansion?${qs}`);
+  return fetchJSON(`${API_URL}/expansion?${qs}`, signal);
 }
 
 export function fetchDemand(
   filters: FilterState,
+  signal?: AbortSignal,
 ): Promise<Record<string, number>> {
   const qs = buildFilterParams(filters);
-  return fetchJSON(`${API_URL}/demand?${qs}`);
+  return fetchJSON(`${API_URL}/demand?${qs}`, signal);
 }

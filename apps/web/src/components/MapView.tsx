@@ -1,6 +1,7 @@
 import type { LayerType } from "@driva/shared";
 import type { Layer, LeafletMouseEvent } from "leaflet";
 import L from "leaflet";
+import { formatCurrency } from "../lib/format";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo } from "react";
 import {
@@ -261,12 +262,7 @@ export function MapView({
             const center = stateCenters[uf];
             if (!center || value === 0) return null;
             const radius = 10 + (value / Math.max(maxDemand, 1)) * 35;
-            const label =
-              value >= 1_000_000_000
-                ? `R$ ${(value / 1_000_000_000).toFixed(1)}B`
-                : value >= 1_000_000
-                  ? `R$ ${(value / 1_000_000).toFixed(0)}M`
-                  : `R$ ${(value / 1_000).toFixed(0)}k`;
+            const label = formatCurrency(value);
             return (
               <CircleMarker
                 key={`demand-${uf}`}

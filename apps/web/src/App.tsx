@@ -1,4 +1,4 @@
-import type { State } from "@driva/shared";
+import { STATE_TO_REGION, type State } from "@driva/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { LayerPanel } from "./components/LayerPanel";
@@ -8,36 +8,6 @@ import { Sidebar } from "./components/Sidebar";
 import { useFilteredData } from "./hooks/useFilteredData";
 import { useMapState } from "./hooks/useMapState";
 import { fetchBranches, fetchCompetitors, fetchGeoJSON } from "./lib/api";
-
-const stateToRegion: Record<string, string> = {
-  AC: "N",
-  AM: "N",
-  AP: "N",
-  PA: "N",
-  RO: "N",
-  RR: "N",
-  TO: "N",
-  AL: "NE",
-  BA: "NE",
-  CE: "NE",
-  MA: "NE",
-  PB: "NE",
-  PE: "NE",
-  PI: "NE",
-  RN: "NE",
-  SE: "NE",
-  DF: "CO",
-  GO: "CO",
-  MT: "CO",
-  MS: "CO",
-  ES: "SE",
-  MG: "SE",
-  RJ: "SE",
-  SP: "SE",
-  PR: "S",
-  RS: "S",
-  SC: "S",
-};
 
 export function App() {
   const {
@@ -108,13 +78,13 @@ export function App() {
   useEffect(() => {
     fetchGeoJSON()
       .then(setGeoData)
-      .catch(() => {});
+      .catch((e) => console.error("Failed to load geo data", e));
     fetchBranches()
       .then(setBranchData)
-      .catch(() => {});
+      .catch((e) => console.error("Failed to load branches", e));
     fetchCompetitors()
       .then(setCompetitorData)
-      .catch(() => {});
+      .catch((e) => console.error("Failed to load competitors", e));
   }, []);
 
   const { counter, stateCompanyCounts, expansionScores, demandByState } =
@@ -142,7 +112,7 @@ export function App() {
   const regionCompanyCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const [uf, count] of Object.entries(stateCompanyCounts)) {
-      const region = stateToRegion[uf] ?? "";
+      const region = STATE_TO_REGION[uf] ?? "";
       if (region) counts[region] = (counts[region] ?? 0) + count;
     }
     return counts;

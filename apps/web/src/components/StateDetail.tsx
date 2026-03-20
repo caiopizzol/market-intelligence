@@ -1,4 +1,9 @@
-import type { LayerType, State } from "@driva/shared";
+import {
+  type LayerType,
+  REGION_ABBREVIATIONS,
+  type State,
+} from "@driva/shared";
+import { formatCurrency, formatNumber } from "../lib/format";
 
 interface StateDetailProps {
   state: State;
@@ -11,28 +16,7 @@ interface StateDetailProps {
   regionCompanyCounts: Record<string, number>;
 }
 
-function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `R$ ${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `R$ ${(n / 1_000_000).toFixed(0)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
-  return n.toString();
-}
-
-function fmtCurrency(n: number): string {
-  if (n >= 1_000_000_000) return `R$ ${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `R$ ${(n / 1_000_000).toFixed(0)}M`;
-  if (n >= 1_000) return `R$ ${(n / 1_000).toFixed(0)}k`;
-  return `R$ ${n}`;
-}
-
 const regionOrder = ["N", "NE", "CO", "SE", "S"];
-const regionFullNames: Record<string, string> = {
-  Norte: "N",
-  Nordeste: "NE",
-  "Centro-Oeste": "CO",
-  Sudeste: "SE",
-  Sul: "S",
-};
 
 export function StateDetail({
   state,
@@ -57,7 +41,7 @@ export function StateDetail({
       `${state.name} tem perfil ${similarity}% similar aos seus mercados ativos`,
     ];
     if (demandValue && showDemand) {
-      parts[0] += ` com ${fmtCurrency(demandValue)} em demanda estimada`;
+      parts[0] += ` com ${formatCurrency(demandValue)} em demanda estimada`;
     }
     if (branchCount === 0 && competitorCount === 0) {
       parts.push("Zero presenca — blue ocean.");
@@ -71,7 +55,7 @@ export function StateDetail({
   }
 
   // Region chart data
-  const regionAbbr = regionFullNames[state.region] ?? "";
+  const regionAbbr = REGION_ABBREVIATIONS[state.region] ?? "";
   const maxRegionCount = Math.max(...Object.values(regionCompanyCounts), 1);
 
   return (
@@ -91,11 +75,13 @@ export function StateDetail({
       <div className="sc-body">
         <div className="sc-row">
           <span className="sc-row-label">Populacao</span>
-          <span className="sc-row-val">{fmt(state.population)}</span>
+          <span className="sc-row-val">{formatNumber(state.population)}</span>
         </div>
         <div className="sc-row">
           <span className="sc-row-label">PIB per capita</span>
-          <span className="sc-row-val">R$ {fmt(state.gdpPerCapita)}</span>
+          <span className="sc-row-val">
+            {formatCurrency(state.gdpPerCapita)}
+          </span>
         </div>
         <div className="sc-row">
           <span className="sc-row-label">Empresas</span>
@@ -105,7 +91,7 @@ export function StateDetail({
           <div className="sc-row">
             <span className="sc-row-label">Demanda estimada</span>
             <span className="sc-row-val purple">
-              {fmtCurrency(demandValue)}
+              {formatCurrency(demandValue)}
             </span>
           </div>
         )}

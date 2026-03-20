@@ -12,6 +12,7 @@ interface FilteredData {
   stateCompanyCounts: Record<string, number>;
   expansionScores: Record<string, number>;
   demandByState: Record<string, number>;
+  error: boolean;
 }
 
 export function useFilteredData(filters: FilterState): FilteredData {
@@ -28,17 +29,24 @@ export function useFilteredData(filters: FilterState): FilteredData {
   const [demandByState, setDemandByState] = useState<Record<string, number>>(
     {},
   );
+  const [error, setError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const abortRef = useRef<AbortController>(null);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = new AbortController();
+      const signal = abortRef.current.signal;
+
+      setError(false);
       Promise.all([
-        fetchCompanyCount(filters),
-        fetchCompaniesByState(filters),
-        fetchExpansion(filters),
-        fetchDemand(filters),
+        fetchCompanyCount(filters, signal),
+        fetchCompaniesByState(filters, signal),
+        fetchExpansion(filters, signal),
+        fetchDemand(filters, signal),
       ])
         .then(([c, counts, expansion, demand]) => {
           setCounter(c);
@@ -50,7 +58,11 @@ export function useFilteredData(filters: FilterState): FilteredData {
           setExpansionScores(scores);
           setDemandByState(demand);
         })
-        .catch(() => {});
+        .catch((e) => {
+          if (e instanceof DOMException && e.name === "AbortError") return;
+          console.error("Filter data fetch failed", e);
+          setError(true);
+        });
     }, 200);
 
     return () => {
@@ -58,5 +70,5 @@ export function useFilteredData(filters: FilterState): FilteredData {
     };
   }, [filters]);
 
-  return { counter, stateCompanyCounts, expansionScores, demandByState };
+  return { counter, stateCompanyCounts, expansionScores, demandByState, error };
 }
