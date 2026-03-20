@@ -7,6 +7,7 @@
 }
 
 :root {
+  /* Base palette */
   --primary: #111827;
   --accent: #2563eb;
   --accent-soft: #eff6ff;
@@ -16,12 +17,31 @@
   --text-2: #4b5563;
   --text-3: #9ca3af;
   --border: #e5e7eb;
+  --border-light: #cbd5e1;
+
+  /* Semantic colors */
   --green: #16a34a;
   --green-soft: #f0fdf4;
   --red: #dc2626;
   --amber: #d97706;
+  --amber-soft: #fffbeb;
+  --purple: #7c3aed;
+  --purple-soft: #f5f3ff;
+
+  /* Map-specific */
+  --map-bg: #eef2f7;
+  --heatmap-high: #22c55e;
+  --heatmap-mid-high: #84cc16;
+  --heatmap-mid: #eab308;
+  --heatmap-mid-low: #f97316;
+  --heatmap-low: #ef4444;
+  --heatmap-neutral: #94a3b8;
+
+  /* Layout */
   --radius: 8px;
+  --radius-sm: 6px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --sidebar-width: 280px;
 }
 
 body {
@@ -42,7 +62,7 @@ body {
 
 /* ─── Left Sidebar ─── */
 .sidebar {
-  width: 280px;
+  width: var(--sidebar-width);
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
@@ -327,7 +347,7 @@ body {
 .main {
   flex: 1;
   position: relative;
-  background: #eef2f7;
+  background: var(--map-bg);
 }
 
 .map-container {
@@ -338,7 +358,7 @@ body {
 .map-container .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #eef2f7;
+  background: var(--map-bg);
 }
 
 /* Marker clusters */
@@ -502,7 +522,7 @@ body {
   position: absolute;
   top: 12px;
   right: 12px;
-  width: 280px;
+  width: var(--sidebar-width);
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -539,7 +559,7 @@ body {
 }
 
 .sc-badge.amber {
-  background: var(--amber-soft, #fffbeb);
+  background: var(--amber-soft);
   color: var(--amber);
 }
 
@@ -582,7 +602,7 @@ body {
 }
 
 .sc-row-val.purple {
-  color: #7c3aed;
+  color: var(--purple);
 }
 
 .sc-row-val.red {
@@ -651,7 +671,7 @@ body {
 }
 
 .sc-insight.amber {
-  background: #fffbeb;
+  background: var(--amber-soft);
   color: var(--amber);
 }
 
@@ -689,14 +709,19 @@ body {
   width: 64px;
   height: 4px;
   border-radius: 2px;
-  background: linear-gradient(to right, #ef4444, #f59e0b, #22c55e);
+  background: linear-gradient(
+    to right,
+    var(--heatmap-low),
+    var(--heatmap-mid),
+    var(--heatmap-high)
+  );
 }
 
 .grad-expansion {
   width: 64px;
   height: 4px;
   border-radius: 2px;
-  background: linear-gradient(to right, #fef3c7, #f59e0b);
+  background: linear-gradient(to right, var(--amber-soft), var(--amber));
 }
 
 /* Zoom controls (rendered inside MapContainer) */

@@ -1,6 +1,7 @@
 import type { LayerType } from "@driva/shared";
 import type { Layer, LeafletMouseEvent } from "leaflet";
 import L from "leaflet";
+import { colors } from "../lib/colors";
 import { formatCurrency } from "../lib/format";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo } from "react";
@@ -29,32 +30,32 @@ interface MapViewProps {
 
 function makeIcon(color: string, size: number) {
   return L.divIcon({
-    className: "",
+    className: "map-marker-icon",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid ${colors.surface};box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
   });
 }
 
-const branchIcon = makeIcon("#2563eb", 14);
-const competitorIcon = makeIcon("#dc2626", 12);
+const branchIcon = makeIcon(colors.accent, 14);
+const competitorIcon = makeIcon(colors.red, 12);
 
 function getColorByCount(count: number, max: number): string {
-  if (max === 0) return "#94a3b8";
+  if (max === 0) return colors.neutral;
   const ratio = count / max;
-  if (ratio >= 0.6) return "#22c55e";
-  if (ratio >= 0.4) return "#84cc16";
-  if (ratio >= 0.2) return "#eab308";
-  if (ratio > 0) return "#f97316";
-  return "#ef4444";
+  if (ratio >= 0.6) return colors.heatmap.high;
+  if (ratio >= 0.4) return colors.heatmap.midHigh;
+  if (ratio >= 0.2) return colors.heatmap.mid;
+  if (ratio > 0) return colors.heatmap.midLow;
+  return colors.heatmap.low;
 }
 
 function getColorByScore(score: number): string {
-  if (score >= 80) return "#22c55e";
-  if (score >= 60) return "#84cc16";
-  if (score >= 40) return "#eab308";
-  if (score >= 20) return "#f97316";
-  return "#ef4444";
+  if (score >= 80) return colors.heatmap.high;
+  if (score >= 60) return colors.heatmap.midHigh;
+  if (score >= 40) return colors.heatmap.mid;
+  if (score >= 20) return colors.heatmap.midLow;
+  return colors.heatmap.low;
 }
 
 function MapControls() {
@@ -105,25 +106,23 @@ export function MapView({
     const count = stateCompanyCounts[uf] ?? 0;
     const expansionSim = expansionScores[uf] ?? 0;
 
-    let fillColor = "#94a3b8";
+    let fillColor = colors.neutral;
     let fillOpacity = 0.15;
-    let borderColor = isSelected ? "#111827" : "#ffffff";
+    let borderColor = isSelected ? colors.primary : colors.surface;
     let borderWidth = isSelected ? 2.5 : 1.5;
     let dashArray: string | undefined;
 
     if (showExpansion) {
       if (expansionSim > 0) {
-        // Expansion candidate — amber, intensity by similarity
-        fillColor = "#f59e0b";
+        fillColor = colors.amber;
         fillOpacity = 0.15 + (expansionSim / 100) * 0.55;
-        borderColor = isSelected ? "#111827" : "#d97706";
+        borderColor = isSelected ? colors.primary : colors.amber;
         borderWidth = isSelected ? 2.5 : 1.5;
         dashArray = isSelected ? undefined : "6 3";
       } else {
-        // Has branches (not an expansion target) — neutral light
-        fillColor = "#94a3b8";
+        fillColor = colors.neutral;
         fillOpacity = 0.08;
-        borderColor = isSelected ? "#111827" : "#cbd5e1";
+        borderColor = isSelected ? colors.primary : colors.borderLight;
         borderWidth = isSelected ? 2.5 : 1;
       }
     } else if (showHeatmap) {
@@ -270,7 +269,7 @@ export function MapView({
                 radius={radius}
                 pathOptions={{
                   color: "transparent",
-                  fillColor: "#7c3aed",
+                  fillColor: colors.purple,
                   fillOpacity: 0.18,
                 }}
               >

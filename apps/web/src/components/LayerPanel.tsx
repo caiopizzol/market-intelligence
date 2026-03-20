@@ -1,4 +1,5 @@
 import type { LayerType } from "@driva/shared";
+import { colors } from "../lib/colors";
 
 type FillMode = "marketPotential" | "expansion" | "none";
 
@@ -12,13 +13,13 @@ const fillOptions: {
     id: "marketPotential",
     label: "Potencial de mercado",
     shortcut: "1",
-    gradient: "linear-gradient(to right, #ef4444, #22c55e)",
+    gradient: `linear-gradient(to right, ${colors.heatmap.low}, ${colors.heatmap.high})`,
   },
   {
     id: "expansion",
     label: "Oportunidades de expansão",
     shortcut: "2",
-    gradient: "linear-gradient(to right, #fef3c7, #f59e0b)",
+    gradient: `linear-gradient(to right, ${colors.amberSoft}, ${colors.amber})`,
   },
   { id: "none", label: "Nenhum", shortcut: "3" },
 ];
@@ -29,9 +30,19 @@ const markerOptions: {
   color: string;
   shortcut: string;
 }[] = [
-  { id: "branches", label: "Filiais", color: "#2563eb", shortcut: "Q" },
-  { id: "competition", label: "Concorrência", color: "#dc2626", shortcut: "W" },
-  { id: "demand", label: "Demanda estimada", color: "#7c3aed", shortcut: "E" },
+  { id: "branches", label: "Filiais", color: colors.accent, shortcut: "Q" },
+  {
+    id: "competition",
+    label: "Concorrência",
+    color: colors.red,
+    shortcut: "W",
+  },
+  {
+    id: "demand",
+    label: "Demanda estimada",
+    color: colors.purple,
+    shortcut: "E",
+  },
 ];
 
 interface LayerPanelProps {
