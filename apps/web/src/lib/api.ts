@@ -1,4 +1,4 @@
-import type { CounterData, FilterState } from "@driva/shared";
+import type { CounterData, ExpansionScore, FilterState } from "@driva/shared";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -40,4 +40,18 @@ export function fetchCompaniesByState(
 ): Promise<Record<string, number>> {
   const qs = buildFilterParams(filters);
   return fetchJSON(`${API_URL}/companies/by-state?${qs}`);
+}
+
+export function fetchExpansion(
+  filters: FilterState,
+): Promise<ExpansionScore[]> {
+  const qs = buildFilterParams(filters);
+  return fetchJSON(`${API_URL}/expansion?${qs}`);
+}
+
+export function fetchDemand(
+  filters: FilterState,
+): Promise<Record<string, number>> {
+  const qs = buildFilterParams(filters);
+  return fetchJSON(`${API_URL}/demand?${qs}`);
 }

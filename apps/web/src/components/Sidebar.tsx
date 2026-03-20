@@ -6,6 +6,7 @@ import type {
   RevenueRange,
   Sector,
 } from "@driva/shared";
+import { useRef, useState } from "react";
 import { CounterBar } from "./CounterBar";
 import { FilterRow } from "./FilterRow";
 
@@ -36,10 +37,37 @@ const regionOptions: Region[] = [
   "Sul",
 ];
 
+const periods = ["Ultimo mes", "12 meses", "Historico"];
+
+function TimePeriod() {
+  const [active, setActive] = useState("12 meses");
+  return (
+    <div className="time-period">
+      {periods.map((p) => (
+        <button
+          type="button"
+          key={p}
+          className={`time-btn ${active === p ? "on" : ""}`}
+          onClick={() => setActive(p)}
+        >
+          {p}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+interface StateOption {
+  uf: string;
+  name: string;
+}
+
 interface SidebarProps {
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
   counter: CounterData;
+  states: StateOption[];
+  onSelectState: (uf: string) => void;
 }
 
 function formatFilterValue(items: string[]): string | null {
@@ -48,7 +76,55 @@ function formatFilterValue(items: string[]): string | null {
   return `${items[0]} +${items.length - 1}`;
 }
 
-export function Sidebar({ filters, onFilterChange, counter }: SidebarProps) {
+export function Sidebar({
+  filters,
+  onFilterChange,
+  counter,
+  states,
+  onSelectState,
+}: SidebarProps) {
+  const [search, setSearch] = useState("");
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const searchResults =
+    search.length >= 2
+      ? states.filter((s) =>
+          s.name.toLowerCase().includes(search.toLowerCase()),
+        )
+      : [];
+
+  function handleSelect(uf: string) {
+    onSelectState(uf);
+    setSearch("");
+    setActiveIndex(-1);
+  }
+
+  function handleSearchKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") {
+      setSearch("");
+      setActiveIndex(-1);
+      (e.target as HTMLElement).blur();
+      return;
+    }
+
+    if (searchResults.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev < searchResults.length - 1 ? prev + 1 : 0,
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev > 0 ? prev - 1 : searchResults.length - 1,
+      );
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      handleSelect(searchResults[activeIndex].uf);
+    }
+  }
   function updateFilter<K extends keyof FilterState>(
     key: K,
     value: FilterState[K],
@@ -62,9 +138,39 @@ export function Sidebar({ filters, onFilterChange, counter }: SidebarProps) {
         <div className="logo-row">
           <div className="logo">Market Intelligence</div>
         </div>
+        <div className="search-wrapper" ref={searchRef}>
+          <input
+            className="search"
+            placeholder="Buscar estado..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setActiveIndex(-1);
+            }}
+            onKeyDown={handleSearchKeyDown}
+          />
+          {!search && <span className="search-hint">/</span>}
+          {searchResults.length > 0 && (
+            <div className="search-results">
+              {searchResults.map((s, i) => (
+                <button
+                  type="button"
+                  key={s.uf}
+                  className={`search-result ${i === activeIndex ? "active" : ""}`}
+                  onClick={() => handleSelect(s.uf)}
+                >
+                  {s.name}
+                  <span className="search-uf">{s.uf}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <CounterBar counter={counter} />
+
+      <TimePeriod />
 
       <div className="filter-scroll">
         <FilterRow

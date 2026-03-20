@@ -2,8 +2,9 @@ import type { LayerType } from "@driva/shared";
 import type { Layer, LeafletMouseEvent } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
+  CircleMarker,
   GeoJSON,
   MapContainer,
   Marker,
@@ -19,6 +20,8 @@ interface MapViewProps {
   branchData: GeoJSON.FeatureCollection | null;
   competitorData: GeoJSON.FeatureCollection | null;
   stateCompanyCounts: Record<string, number>;
+  expansionScores: Record<string, number>;
+  demandByState: Record<string, number>;
   onStateClick: (uf: string) => void;
   selectedUf: string | null;
 }
@@ -78,12 +81,16 @@ export function MapView({
   branchData,
   competitorData,
   stateCompanyCounts,
+  expansionScores,
+  demandByState,
   onStateClick,
   selectedUf,
 }: MapViewProps) {
   const showHeatmap = activeLayers.has("marketPotential");
   const showBranches = activeLayers.has("branches");
   const showCompetitors = activeLayers.has("competition");
+  const showExpansion = activeLayers.has("expansion");
+  const showDemand = activeLayers.has("demand");
 
   const hasFilteredData = Object.keys(stateCompanyCounts).length > 0;
   const maxCount = hasFilteredData
@@ -95,11 +102,30 @@ export function MapView({
     const score = feature?.properties?.potentialScore ?? 50;
     const isSelected = uf === selectedUf;
     const count = stateCompanyCounts[uf] ?? 0;
+    const expansionSim = expansionScores[uf] ?? 0;
 
     let fillColor = "#94a3b8";
     let fillOpacity = 0.15;
+    let borderColor = isSelected ? "#111827" : "#ffffff";
+    let borderWidth = isSelected ? 2.5 : 1.5;
+    let dashArray: string | undefined;
 
-    if (showHeatmap) {
+    if (showExpansion) {
+      if (expansionSim > 0) {
+        // Expansion candidate — amber, intensity by similarity
+        fillColor = "#f59e0b";
+        fillOpacity = 0.15 + (expansionSim / 100) * 0.55;
+        borderColor = isSelected ? "#111827" : "#d97706";
+        borderWidth = isSelected ? 2.5 : 1.5;
+        dashArray = isSelected ? undefined : "6 3";
+      } else {
+        // Has branches (not an expansion target) — neutral light
+        fillColor = "#94a3b8";
+        fillOpacity = 0.08;
+        borderColor = isSelected ? "#111827" : "#cbd5e1";
+        borderWidth = isSelected ? 2.5 : 1;
+      }
+    } else if (showHeatmap) {
       fillColor = hasFilteredData
         ? getColorByCount(count, maxCount)
         : getColorByScore(score);
@@ -111,8 +137,9 @@ export function MapView({
     return {
       fillColor,
       fillOpacity,
-      color: isSelected ? "#111827" : "#ffffff",
-      weight: isSelected ? 2.5 : 1.5,
+      color: borderColor,
+      weight: borderWidth,
+      dashArray,
     };
   }
 
@@ -130,7 +157,26 @@ export function MapView({
   const branchFeatures = branchData?.features ?? [];
   const competitorFeatures = competitorData?.features ?? [];
 
-  const geoKey = `${showHeatmap}-${selectedUf}-${JSON.stringify(stateCompanyCounts)}`;
+  // Compute approximate center of each state for demand bubbles
+  const stateCenters = useMemo(() => {
+    if (!geoData) return {};
+    const centers: Record<string, [number, number]> = {};
+    for (const f of geoData.features) {
+      const uf = f.properties?.uf as string;
+      if (!uf) continue;
+      const bounds = L.geoJSON(f).getBounds();
+      const center = bounds.getCenter();
+      centers[uf] = [center.lat, center.lng];
+    }
+    return centers;
+  }, [geoData]);
+
+  const maxDemand = useMemo(() => {
+    const vals = Object.values(demandByState);
+    return vals.length > 0 ? Math.max(...vals) : 0;
+  }, [demandByState]);
+
+  const geoKey = `${showHeatmap}-${showExpansion}-${selectedUf}-${JSON.stringify(stateCompanyCounts)}-${JSON.stringify(expansionScores)}`;
 
   return (
     <div className="map-container">
@@ -210,6 +256,36 @@ export function MapView({
               );
             })}
         </MarkerClusterGroup>
+        {showDemand &&
+          Object.entries(demandByState).map(([uf, value]) => {
+            const center = stateCenters[uf];
+            if (!center || value === 0) return null;
+            const radius = 10 + (value / Math.max(maxDemand, 1)) * 35;
+            const label =
+              value >= 1_000_000_000
+                ? `R$ ${(value / 1_000_000_000).toFixed(1)}B`
+                : value >= 1_000_000
+                  ? `R$ ${(value / 1_000_000).toFixed(0)}M`
+                  : `R$ ${(value / 1_000).toFixed(0)}k`;
+            return (
+              <CircleMarker
+                key={`demand-${uf}`}
+                center={center}
+                radius={radius}
+                pathOptions={{
+                  color: "transparent",
+                  fillColor: "#7c3aed",
+                  fillOpacity: 0.18,
+                }}
+              >
+                <Popup>
+                  <strong>{label}</strong>
+                  <br />
+                  Demanda estimada
+                </Popup>
+              </CircleMarker>
+            );
+          })}
       </MapContainer>
     </div>
   );

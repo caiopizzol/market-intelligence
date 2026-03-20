@@ -1,6 +1,11 @@
 export type Region = "Norte" | "Nordeste" | "Centro-Oeste" | "Sudeste" | "Sul";
 
-export type LayerType = "branches" | "marketPotential" | "competition";
+export type LayerType =
+  | "branches"
+  | "marketPotential"
+  | "competition"
+  | "expansion"
+  | "demand";
 
 export interface State {
   name: string;
@@ -67,4 +72,9 @@ export interface Company {
 export interface CounterData {
   total: number;
   filtered: number;
+}
+
+export interface ExpansionScore {
+  uf: string;
+  similarity: number;
 }

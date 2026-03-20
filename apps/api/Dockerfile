@@ -14,5 +14,5 @@ COPY apps/api apps/api
 
 WORKDIR /app/apps/api
 
-EXPOSE 8787
+EXPOSE 4000
 CMD ["bun", "--hot", "src/index.ts"]

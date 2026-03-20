@@ -10,6 +10,7 @@
     }
   },
   "files": {
-    "includes": ["apps/**", "packages/**"]
+    "includes": ["apps/**", "packages/**"],
+    "experimentalScannerIgnores": ["**/dist/**", "**/node_modules/**"]
   }
 }

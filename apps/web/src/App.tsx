@@ -1,13 +1,43 @@
 import type { State } from "@driva/shared";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnalysisPanel } from "./components/AnalysisPanel";
-import { LayerChips } from "./components/LayerChips";
+import { LayerPanel } from "./components/LayerPanel";
 import { MapLegend } from "./components/MapLegend";
 import { MapView } from "./components/MapView";
 import { Sidebar } from "./components/Sidebar";
 import { useFilteredData } from "./hooks/useFilteredData";
 import { useMapState } from "./hooks/useMapState";
 import { fetchBranches, fetchCompetitors, fetchGeoJSON } from "./lib/api";
+
+const stateToRegion: Record<string, string> = {
+  AC: "N",
+  AM: "N",
+  AP: "N",
+  PA: "N",
+  RO: "N",
+  RR: "N",
+  TO: "N",
+  AL: "NE",
+  BA: "NE",
+  CE: "NE",
+  MA: "NE",
+  PB: "NE",
+  PE: "NE",
+  PI: "NE",
+  RN: "NE",
+  SE: "NE",
+  DF: "CO",
+  GO: "CO",
+  MT: "CO",
+  MS: "CO",
+  ES: "SE",
+  MG: "SE",
+  RJ: "SE",
+  SP: "SE",
+  PR: "S",
+  RS: "S",
+  SC: "S",
+};
 
 export function App() {
   const {
@@ -18,6 +48,54 @@ export function App() {
     filters,
     setFilters,
   } = useMapState();
+
+  // Keyboard shortcuts for layers
+  const handleKeyboard = useCallback(
+    (e: KeyboardEvent) => {
+      // Skip if user is typing in an input
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        document.querySelector<HTMLInputElement>(".search")?.focus();
+        return;
+      }
+
+      switch (e.key) {
+        case "1":
+          if (activeLayers.has("expansion")) toggleLayer("expansion");
+          if (!activeLayers.has("marketPotential"))
+            toggleLayer("marketPotential");
+          break;
+        case "2":
+          if (activeLayers.has("marketPotential"))
+            toggleLayer("marketPotential");
+          if (!activeLayers.has("expansion")) toggleLayer("expansion");
+          break;
+        case "3":
+          if (activeLayers.has("marketPotential"))
+            toggleLayer("marketPotential");
+          if (activeLayers.has("expansion")) toggleLayer("expansion");
+          break;
+        case "q":
+          toggleLayer("branches");
+          break;
+        case "w":
+          toggleLayer("competition");
+          break;
+        case "e":
+          toggleLayer("demand");
+          break;
+      }
+    },
+    [activeLayers, toggleLayer],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyboard);
+    return () => document.removeEventListener("keydown", handleKeyboard);
+  }, [handleKeyboard]);
 
   const [geoData, setGeoData] = useState<GeoJSON.FeatureCollection | null>(
     null,
@@ -39,7 +117,8 @@ export function App() {
       .catch(() => {});
   }, []);
 
-  const { counter, stateCompanyCounts } = useFilteredData(filters);
+  const { counter, stateCompanyCounts, expansionScores, demandByState } =
+    useFilteredData(filters);
 
   const branchCountsByState = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -58,6 +137,26 @@ export function App() {
     }
     return counts;
   }, [competitorData]);
+
+  // Company counts aggregated by region abbreviation (for the mini chart)
+  const regionCompanyCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const [uf, count] of Object.entries(stateCompanyCounts)) {
+      const region = stateToRegion[uf] ?? "";
+      if (region) counts[region] = (counts[region] ?? 0) + count;
+    }
+    return counts;
+  }, [stateCompanyCounts]);
+
+  const stateList = useMemo(() => {
+    if (!geoData) return [];
+    return geoData.features
+      .filter((f) => f.properties != null)
+      .map((f) => ({
+        uf: f.properties.uf as string,
+        name: f.properties.name as string,
+      }));
+  }, [geoData]);
 
   const selectedState: State | null = useMemo(() => {
     if (!geoData || !selectedUf) return null;
@@ -83,6 +182,8 @@ export function App() {
         filters={filters}
         onFilterChange={setFilters}
         counter={counter}
+        states={stateList}
+        onSelectState={setSelectedUf}
       />
       <div className="main">
         <MapView
@@ -91,19 +192,25 @@ export function App() {
           branchData={branchData}
           competitorData={competitorData}
           stateCompanyCounts={stateCompanyCounts}
+          expansionScores={expansionScores}
+          demandByState={demandByState}
           onStateClick={setSelectedUf}
           selectedUf={selectedUf}
         />
-        <LayerChips active={activeLayers} onToggle={toggleLayer} />
+        <LayerPanel activeLayers={activeLayers} onToggle={toggleLayer} />
         <AnalysisPanel
           selectedState={selectedState}
+          activeLayers={activeLayers}
           companyCount={selectedUf ? (stateCompanyCounts[selectedUf] ?? 0) : 0}
           branchCount={selectedUf ? (branchCountsByState[selectedUf] ?? 0) : 0}
           competitorCount={
             selectedUf ? (competitorCountsByState[selectedUf] ?? 0) : 0
           }
+          similarity={selectedUf ? (expansionScores[selectedUf] ?? null) : null}
+          demandValue={selectedUf ? (demandByState[selectedUf] ?? null) : null}
+          regionCompanyCounts={regionCompanyCounts}
         />
-        <MapLegend />
+        <MapLegend activeLayers={activeLayers} />
       </div>
     </>
   );
