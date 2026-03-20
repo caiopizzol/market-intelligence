@@ -19,6 +19,8 @@ export function App() {
     setFilters,
   } = useMapState();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   // Keyboard shortcuts for layers
   const handleKeyboard = useCallback(
     (e: KeyboardEvent) => {
@@ -148,14 +150,48 @@ export function App() {
 
   return (
     <>
-      <Sidebar
-        filters={filters}
-        onFilterChange={setFilters}
-        counter={counter}
-        states={stateList}
-        onSelectState={setSelectedUf}
-      />
+      <div className={`sidebar-wrapper ${sidebarOpen ? "open" : ""}`}>
+        <Sidebar
+          filters={filters}
+          onFilterChange={setFilters}
+          counter={counter}
+          states={stateList}
+          onSelectState={(uf) => {
+            setSelectedUf(uf);
+            setSidebarOpen(false);
+          }}
+        />
+      </div>
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Fechar menu"
+        />
+      )}
       <div className="main">
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Abrir filtros"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 5h14M3 10h14M3 15h14"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
         <MapView
           activeLayers={activeLayers}
           geoData={geoData}
